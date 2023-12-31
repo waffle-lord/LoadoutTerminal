@@ -30,6 +30,11 @@ export class LoadoutManager
         return this._loadouts.size;
     }
 
+    getLoadoutNames(): string[]
+    {
+        return Array.from(this._loadouts.keys());
+    }
+
     saveLoadout(name: string, loadout: Item[]): void
     {
         this._loadouts.set(name, loadout);
@@ -47,5 +52,20 @@ export class LoadoutManager
     getLoadout(name: string): Item[] | undefined
     {
         return this._loadouts.get(name);
+    }
+
+    renameLoadout(oldName: string, newName: string): boolean
+    {
+        const loadout = this._loadouts.get(oldName);
+
+        if (loadout == undefined)
+        {
+            return false;
+        }
+
+        this._loadouts.delete(oldName);
+        this.saveLoadout(newName, loadout);
+
+        return true;
     }
 }
