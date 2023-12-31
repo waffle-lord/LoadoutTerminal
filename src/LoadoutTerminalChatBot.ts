@@ -2,18 +2,20 @@ import { IDialogueChatBot } from "@spt-aki/helpers/Dialogue/IDialogueChatBot";
 import { ISendMessageRequest } from "@spt-aki/models/eft/dialog/ISendMessageRequest";
 import { IUserDialogInfo } from "@spt-aki/models/eft/profile/IAkiProfile";
 import { MemberCategory } from "@spt-aki/models/enums/MemberCategory";
-import { MailSendService } from "@spt-aki/services/MailSendService";
+import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { CommandHandler } from "./CommandHandler";
 import { inject, injectable } from "tsyringe";
+import { LogTextColor } from "@spt-aki/models/spt/logging/LogTextColor";
 
 @injectable()
 export class LoadoutTerminalChatBot implements IDialogueChatBot
 {
     public constructor(
-        @inject("MailSendService") protected mailSendService: MailSendService,
         @inject("CommandHandler") protected commandHandler: CommandHandler,
+        @inject("WinstonLogger") protected logger: ILogger,
     )
     {
+        logger.logWithColor(`[waffle.modder] Loadout Terminal :: ${commandHandler.count()} loadouts ready`, LogTextColor.MAGENTA)
     }
 
     public getChatBot(): IUserDialogInfo
