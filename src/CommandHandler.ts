@@ -7,6 +7,7 @@ import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 import { InRaidHelper } from "@spt-aki/helpers/InRaidHelper";
 import { ItemHelper } from "@spt-aki/helpers/ItemHelper";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { CommandInfo, CommandType } from "./CommandInfo";
 
 
 @injectable()
@@ -23,24 +24,53 @@ export class CommandHandler
     {
     }
 
-    private helpCommand(): string
+    private helpCommand(info: CommandInfo): string
     {
-        return "Available Commands:\n" +
-               "help\t\t\t:: This help text :D\n" +
-               "save -name-\t\t:: Save your current loadout (equipt items)\n" +
-               "rm -name-\t\t:: Remove a saved loadout\n" +
-               "get -name-\t\t:: Send yourself a loadout\n" +
-               "list\t\t\t:: List saved loadouts\n" + 
-               "mv -old- | -new-\t:: rename a loadout\n" + 
-               "\nParameters in -dashes- in the commands above can be any string of text\n" +
-               "Examples: \n" +
-               "save my super cool loadout\n" +
-               "would save with the name 'my super cool loadout'\n\n" +
-               "mv old name | new name\n" +
-               "would rename 'old name' to 'new name'";
+        if (!info.name) 
+        {
+            return "Available Commands:\n" +
+                   "help -command-\t:: This help text :D\n\t\t\t : Send with a command name to learn more\n\t\t\t : about it\n" +
+                   "save \t\t\t:: Save your currently equipped items\n" +
+                   "rm \t\t\t:: Remove a saved loadout\n" +
+                   "get \t\t\t:: Send yourself a loadout\n" +
+                   "list\t\t\t:: List saved loadouts\n" +
+                   "mv \t\t\t:: Rename a loadout\n";
+        }
+
+        switch(info.name.toLowerCase())
+        {
+            case "save":
+                return "Save your currently equipped items\n" +
+                       "- - - - - - - - - - - - - - - - - - - - - - - - -\n" +
+                       "more here";
+            case "get":
+                return "Send yourself a loadout\n" +
+                       "- - - - - - - - - - - - - - - -\n" +
+                       "more here";
+            case "list":
+                return "List saved loadouts\n" +
+                       "- - - - - - - - - - - - - -\n" +
+                       "more here";
+            case "mv":
+                return "Rename a loadout\n" +
+                       "- - - - - - - - - - - - -\n" +
+                       "more here";
+            case "rm":
+                return "Remove a saved loadout\n" +
+                       "- - - - - - - - - - - - - - - -\n" +
+                       "more here";
+            case "help":
+                return "cheeky breeky :)\n" +
+                       "- - - - - - - - - - - - -\n" +
+                       "incase you actually needed help with the help command though ...\n\n" +
+                       "available params: save | get | list | mv | rm | help\n" +
+                       "Example: help save";
+            default:
+                return "could not find command, please try again"
+        }
     }
 
-    private saveLoadoutCommand(name: string, sessionId: string, bot: IUserDialogInfo): string
+    private saveLoadoutCommand(info: CommandInfo, sessionId: string, bot: IUserDialogInfo): string
     {
         // run after 10s timeout to hopefully ensure profile changes are saved
         setTimeout(() => {
@@ -70,28 +100,28 @@ export class CommandHandler
                 }
             }
         
-            this.loadoutManager.saveLoadout(name, equipt);
+            this.loadoutManager.saveLoadout(info.name, equipt);
         
             this.mailSendService.sendUserMessageToPlayer(
                 sessionId,
                 bot,
-                `loadout saved: ${name}`);
+                `loadout saved: ${info.name}`);
 
         }, 10000);
 
-        return `Loadout '${name}' will be saved in ~10 seconds to help ensure profile was saved.\nPlease wait ...`;
+        return `Loadout '${info.name}' will be saved in ~10 seconds to help ensure profile was saved.\nPlease wait ...`;
     }
 
-    private removeLoadoutCommand(name: string): string
+    private removeLoadoutCommand(info: CommandInfo): string
     {
-        this.loadoutManager.removeLoadout(name);
+        this.loadoutManager.removeLoadout(info.name);
 
-        return `loadout remove: ${name}`;
+        return `loadout remove: ${info.name}`;
     }
 
-    private getLoadoutCommand(name: string, sessionId: string, bot: IUserDialogInfo): string
+    private getLoadoutCommand(info: CommandInfo, sessionId: string, bot: IUserDialogInfo): string
     {
-        const loadout = this.loadoutManager.getLoadout(name);
+        const loadout = this.loadoutManager.getLoadout(info.name);
 
         if (loadout == undefined)
         {
@@ -102,7 +132,7 @@ export class CommandHandler
 
         this.mailSendService.sendSystemMessageToPlayer(
             sessionId,
-            `Here is your loadout: ${name}`,
+            `Here is your loadout: ${info.name}`,
             loadoutUpdated
         );
 
@@ -121,14 +151,14 @@ export class CommandHandler
         return message;
     }
 
-    private renameLoadoutCommand(oldName: string, newName: string): string
+    private renameLoadoutCommand(info: CommandInfo): string
     {
-        if(!this.loadoutManager.renameLoadout(oldName, newName))
+        if(!this.loadoutManager.renameLoadout(info.name, info.newName))
         {
             return "failed to rename loadout"
         }
 
-        return `loadout renamed\n${oldName} -> ${newName}`
+        return `loadout renamed\n${info.name} -> ${info.newName}`
     }
 
     count(): number
@@ -138,52 +168,38 @@ export class CommandHandler
 
     route(sessionId: string, request: ISendMessageRequest, bot: IUserDialogInfo): void
     {
-        // regex to resolve commands (not list or help though)
-        // ^(?<command>save|rm|get|mv) (?<name>(?![ ]+)[\w ]+)(?<price>([|] ((?![ ]+)[\w ]+))|--price( (?<currency>d|r|e|D|R|E)?(?<amount>\d*))?)?$
-        
-        const commandInfo = request.text.split(" ", 1);
-        const command = commandInfo[0] ?? "";
-        var name = request.text.replace(command, "").trim();
-        var newName = ""
-
-        if (name.includes(" | "))
-        {
-            const nameSplit = name.split(" | ", 2);
-
-            name = nameSplit[0];
-            newName = nameSplit[1];
-        }
+        const commandInfo = CommandInfo.Parse(request.text);
 
         let response = "something went super wrong :(";
 
-        switch (command.toLowerCase())
+        switch (commandInfo.command)
         {
-            case "help":
-                response = this.helpCommand();
+            case CommandType.help:
+                response = this.helpCommand(commandInfo);
                 break;
 
-            case "save":
-                response = this.saveLoadoutCommand(name, sessionId, bot);
+            case CommandType.save:
+                response = this.saveLoadoutCommand(commandInfo, sessionId, bot);
                 break;
 
-            case "rm":
-                response = this.removeLoadoutCommand(name);
+            case CommandType.delete:
+                response = this.removeLoadoutCommand(commandInfo);
                 break;
 
-            case "get":
-                response = this.getLoadoutCommand(name, sessionId, bot);
+            case CommandType.get:
+                response = this.getLoadoutCommand(commandInfo, sessionId, bot);
                 break;
 
-            case "list":
+            case CommandType.list:
                 response = this.listLoadoutCommand();
                 break;
             
-            case "mv":
-                response = this.renameLoadoutCommand(name, newName);
+            case CommandType.rename:
+                response = this.renameLoadoutCommand(commandInfo);
                 break;
             
-            default:
-                response = "invalid command :(\nSend 'help' without quotes for a list of commands";
+            case CommandType.invalid:
+                response = commandInfo.message;
         }
 
         this.mailSendService.sendUserMessageToPlayer(
