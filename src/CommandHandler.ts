@@ -138,6 +138,9 @@ export class CommandHandler
 
     route(sessionId: string, request: ISendMessageRequest, bot: IUserDialogInfo): void
     {
+        // regex to resolve commands (not list or help though)
+        // ^(?<command>save|rm|get|mv) (?<name>(?![ ]+)[\w ]+)(?<price>([|] ((?![ ]+)[\w ]+))|--price( (?<currency>d|r|e|D|R|E)?(?<amount>\d*))?)?$
+        
         const commandInfo = request.text.split(" ", 1);
         const command = commandInfo[0] ?? "";
         var name = request.text.replace(command, "").trim();
@@ -150,8 +153,6 @@ export class CommandHandler
             name = nameSplit[0];
             newName = nameSplit[1];
         }
-
-
 
         let response = "something went super wrong :(";
 
