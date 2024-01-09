@@ -5,6 +5,7 @@ export enum CommandType
     invalid,
     save,
     get,
+    setprice,
     rename,
     delete,
     list,

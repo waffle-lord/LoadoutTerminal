@@ -29,45 +29,72 @@ export class CommandHandler
         if (!info.name) 
         {
             return "Available Commands:\n" +
-                   "help -command-\t:: This help text :D\n\t\t\t : Send with a command name to learn more\n\t\t\t : about it\n" +
-                   "save \t\t\t:: Save your currently equipped items\n" +
-                   "rm \t\t\t:: Remove a saved loadout\n" +
-                   "get \t\t\t:: Send yourself a loadout\n" +
-                   "list\t\t\t:: List saved loadouts\n" +
-                   "mv \t\t\t:: Rename a loadout\n";
+                   "help\t\t:: This help text :D\n\t\t : Send with a command name to learn more\n\t\t : about it\n" +
+                   "list\t\t:: List saved loadouts\n" +
+                   "save\t\t:: Save your currently equipped items\n" +
+                   "get\t\t:: Send yourself a loadout\n" +
+                   "setprice\t:: Set the price on a loadout\n" +
+                   "mv\t\t:: Rename a loadout\n" +
+                   "rm\t\t:: Remove a saved loadout\n";
         }
 
         switch(info.name.toLowerCase())
         {
-            case "save":
-                return "Save your currently equipped items\n" +
-                       "- - - - - - - - - - - - - - - - - - - - - - - - -\n" +
-                       "more here";
-            case "get":
-                return "Send yourself a loadout\n" +
-                       "- - - - - - - - - - - - - - - -\n" +
-                       "more here";
-            case "list":
-                return "List saved loadouts\n" +
-                       "- - - - - - - - - - - - - -\n" +
-                       "more here";
-            case "mv":
-                return "Rename a loadout\n" +
-                       "- - - - - - - - - - - - -\n" +
-                       "more here";
-            case "rm":
-                return "Remove a saved loadout\n" +
-                       "- - - - - - - - - - - - - - - -\n" +
-                       "more here";
             case "help":
                 return "cheeky breeky :)\n" +
                        "- - - - - - - - - - - - -\n" +
                        "incase you actually needed help with the help command though ...\n\n" +
-                       "available params: save | get | list | mv | rm | help\n" +
+                       "help -command name-\n" +
+                       "Parameters:\n" +
+                       "command name: save | get | list | mv | rm | help\n" +
                        "Example: help save";
+
+            case "list":
+                return "List saved loadouts\n" +
+                       "- - - - - - - - - - - - - -\n" +
+                       "Usage\t:: list\n";
+
+            case "save":
+                return "Save your currently equipped items\n" +
+                       "- - - - - - - - - - - - - - - - - - - - - - - - -\n" +
+                       "Usage\t:: save -name- (--price -price info-)\n" +
+                       "";
+
+            case "get":
+                return "Send yourself a loadout\n" +
+                       "- - - - - - - - - - - - - - - -\n" +
+                       "more here";
+
+            case "setprice":
+                return "Set the price on a loadout\n" +
+                       "- - - - - - - - - - - - - - - - - -" +
+                       "more here";
+
+            case "mv":
+                return "Rename a loadout\n" +
+                       "- - - - - - - - - - - - -\n" +
+                       "more here";
+
+            case "rm":
+                return "Remove a saved loadout\n" +
+                       "- - - - - - - - - - - - - - - -\n" +
+                       "more here";
+
             default:
                 return "could not find command, please try again"
         }
+    }
+
+    private listLoadoutCommand(): string
+    {
+        var message: string = "== Saved Loadouts ==\n";
+
+        for (const loadoutName of this.loadoutManager.getLoadoutNames())
+        {
+            message += `- ${loadoutName}\n`
+        }
+
+        return message;
     }
 
     private saveLoadoutCommand(info: CommandInfo, sessionId: string, bot: IUserDialogInfo): string
@@ -112,13 +139,6 @@ export class CommandHandler
         return `Loadout '${info.name}' will be saved in ~10 seconds to help ensure profile was saved.\nPlease wait ...`;
     }
 
-    private removeLoadoutCommand(info: CommandInfo): string
-    {
-        this.loadoutManager.removeLoadout(info.name);
-
-        return `loadout remove: ${info.name}`;
-    }
-
     private getLoadoutCommand(info: CommandInfo, sessionId: string, bot: IUserDialogInfo): string
     {
         const loadout = this.loadoutManager.getLoadout(info.name);
@@ -138,17 +158,10 @@ export class CommandHandler
 
         return "You can find your items in the system chat";
     }
-
-    private listLoadoutCommand(): string
+    
+    private setPriceCommand(info: CommandInfo): string
     {
-        var message: string = "== Saved Loadouts ==\n";
-
-        for (const loadoutName of this.loadoutManager.getLoadoutNames())
-        {
-            message += `- ${loadoutName}\n`
-        }
-
-        return message;
+        return "Not implemented"
     }
 
     private renameLoadoutCommand(info: CommandInfo): string
@@ -159,6 +172,13 @@ export class CommandHandler
         }
 
         return `loadout renamed\n${info.name} -> ${info.newName}`
+    }
+
+    private removeLoadoutCommand(info: CommandInfo): string
+    {
+        this.loadoutManager.removeLoadout(info.name);
+
+        return `loadout remove: ${info.name}`;
     }
 
     count(): number
@@ -178,24 +198,28 @@ export class CommandHandler
                 response = this.helpCommand(commandInfo);
                 break;
 
-            case CommandType.save:
-                response = this.saveLoadoutCommand(commandInfo, sessionId, bot);
+            case CommandType.list:
+                response = this.listLoadoutCommand();
                 break;
 
-            case CommandType.delete:
-                response = this.removeLoadoutCommand(commandInfo);
+            case CommandType.save:
+                response = this.saveLoadoutCommand(commandInfo, sessionId, bot);
                 break;
 
             case CommandType.get:
                 response = this.getLoadoutCommand(commandInfo, sessionId, bot);
                 break;
 
-            case CommandType.list:
-                response = this.listLoadoutCommand();
+            case CommandType.setprice:
+                response = this.setPriceCommand(commandInfo);
                 break;
-            
+
             case CommandType.rename:
                 response = this.renameLoadoutCommand(commandInfo);
+                break;
+
+            case CommandType.delete:
+                response = this.removeLoadoutCommand(commandInfo);
                 break;
             
             case CommandType.invalid:
