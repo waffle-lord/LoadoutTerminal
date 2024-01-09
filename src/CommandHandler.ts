@@ -28,57 +28,85 @@ export class CommandHandler
     {
         if (!info.name) 
         {
-            return "Available Commands:\n" +
+            return "== Available Commands ==\n" +
                    "help\t\t:: This help text :D\n\t\t : Send with a command name to learn more\n\t\t : about it\n" +
                    "list\t\t:: List saved loadouts\n" +
                    "save\t\t:: Save your currently equipped items\n" +
                    "get\t\t:: Send yourself a loadout\n" +
                    "setprice\t:: Set the price on a loadout\n" +
                    "mv\t\t:: Rename a loadout\n" +
-                   "rm\t\t:: Remove a saved loadout\n";
+                   "rm\t\t:: Remove a saved loadout\n" +
+                   "-   -   -   -   -   -   -   -   -   -   -   -   -\n" +
+                   "Detailed help info is in the README and mod page";
         }
 
         switch(info.name.toLowerCase())
         {
             case "help":
                 return "cheeky breeky :)\n" +
-                       "- - - - - - - - - - - - -\n" +
                        "incase you actually needed help with the help command though ...\n\n" +
-                       "help -command name-\n" +
-                       "Parameters:\n" +
-                       "command name: save | get | list | mv | rm | help\n" +
-                       "Example: help save";
+                       "Usage\t\t\t:: help -command name-\n" +
+                       "== Parameters ==\n" +
+                       "command name\t:: any command name shown in the help message\n" +
+                       "== Examples ==\n" + 
+                       "'help save' shows the save help info";
 
             case "list":
                 return "List saved loadouts\n" +
-                       "- - - - - - - - - - - - - -\n" +
                        "Usage\t:: list\n";
 
             case "save":
                 return "Save your currently equipped items\n" +
-                       "- - - - - - - - - - - - - - - - - - - - - - - - -\n" +
-                       "Usage\t:: save -name- (--price -price info-)\n" +
-                       "";
+                       "Usage\t\t:: save -name- (--price -price info-)\n" +
+                       "== Parameters ==\n" +
+                       "name\t\t:: The name of your loadout\n" + 
+                       "--price\t:: optionally add a price to the loadout\n" +
+                       "price info\t:: optionally specify the money type and amount\n" +
+                       "\t\t : money type can be d or e (dollars or euros)\n" +
+                       "\t\t : default money type is roubles\n" +
+                       "\t\t : amount is a number or dynamic when blank\n" +
+                       "== Examples ==\n" + 
+                       "'save my loadout' save as my loadout (no price)\n" +
+                       "'save my loadout --price e1000' save with price as 1000 euros";
 
             case "get":
                 return "Send yourself a loadout\n" +
-                       "- - - - - - - - - - - - - - - -\n" +
-                       "more here";
+                       "Usage\t:: get -name-\n" +
+                       "== Parameters ==\n" +
+                       "name\t:: the name of the loadout\n" +
+                       "== Examples ==\n" +
+                       "'get my loadout' sends you items from my loadout";
 
             case "setprice":
                 return "Set the price on a loadout\n" +
-                       "- - - - - - - - - - - - - - - - - -" +
-                       "more here";
+                       "Usage\t:: setprice -name- (-price info-)\n" +
+                       "== Parameters ==\n" +
+                       "name\t\t:: the name of the loadout\n" +
+                       "price info\t:: optionally specify the money type and amount\n" +
+                       "\t\t : money type can be d or e (dollars or euros)\n" +
+                       "\t\t : default money type is roubles\n" +
+                       "\t\t : amount is a number or dynamic when blank\n" +
+                       "\t\t : set price to 0 to remove the price\n" +
+                       "== Examples ==\n" +
+                       "'setprice my loadout d1000' set price to 1000 dollars\n" +
+                       "'setprice my loadout 0' remove price from loadout";
 
             case "mv":
                 return "Rename a loadout\n" +
-                       "- - - - - - - - - - - - -\n" +
-                       "more here";
+                       "Usage\t\t:: mv -old name- | -new name-\n" +
+                       "== Parameters ==\n" +
+                       "old name\t:: the loadout to update\n" +
+                       "new name\t:: the new name of the loadout\n" +
+                       "== Examples ==\n" +
+                       "'mv my loadout | tacos' change name of my loadout to tacos";
 
             case "rm":
                 return "Remove a saved loadout\n" +
-                       "- - - - - - - - - - - - - - - -\n" +
-                       "more here";
+                       "Usage\t:: rm -name-\n" +
+                       "== Parameters ==\n" +
+                       "name\t:: the name of the loadout\n" +
+                       "== Examples ==\n" +
+                       "'rm my loadout' delete my loadout";
 
             default:
                 return "could not find command, please try again"
