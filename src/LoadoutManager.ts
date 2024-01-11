@@ -4,12 +4,16 @@ import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { VFS } from "@spt-aki/utils/VFS";
 
 import path from "path";
+import { Money } from "@spt-aki/models/enums/Money";
+import { PriceInfo } from "./PriceInfo";
 
 @injectable()
 export class LoadoutManager
 {
     private static _loadoutsFilePath =  path.resolve(__dirname, "../data/loadouts.json");
+    private static _loadoutsPricesPath = path.resolve(__dirname, "../data/loadout_prices.json");
     private _loadouts: Map<string, Item[]>;
+    private _prices: Map<string, PriceInfo>;
 
     public constructor(
         @inject("JsonUtil") protected jsonUtil: JsonUtil,
@@ -17,17 +21,23 @@ export class LoadoutManager
     )
     {
         this._loadouts = new Map(jsonUtil.deserialize(vfs.readFile(LoadoutManager._loadoutsFilePath)));
+        this._prices = new Map(jsonUtil.deserialize(vfs.readFile(LoadoutManager._loadoutsPricesPath)));
     }
 
-    private saveToDisk(): void
+    private saveToDisk<K,V>(path: string, data: Map<K,V>): void
     {
-        const json = this.jsonUtil.serialize(Array.from(this._loadouts.entries()), true);
-        this.vfs.writeFile(LoadoutManager._loadoutsFilePath, json);
+        const json = this.jsonUtil.serialize(Array.from(data.entries()), true);
+        this.vfs.writeFile(path, json);
     }
 
-    count(): number
+    loadoutCount(): number
     {
         return this._loadouts.size;
+    }
+
+    priceCount(): number
+    {
+        return this._prices.size;
     }
 
     getLoadoutNames(): string[]
@@ -35,17 +45,32 @@ export class LoadoutManager
         return Array.from(this._loadouts.keys());
     }
 
+    saveLoadoutPrice(name: string, price: number, currency: Money): void
+    {
+        this._prices.set(name, new PriceInfo(name, price, currency));
+        this.saveToDisk(LoadoutManager._loadoutsPricesPath, this._prices);
+    }
+
+    removeLoadoutPrice(name: string): void
+    {
+        if (this._prices.delete(name))
+        {
+            this.saveToDisk(LoadoutManager._loadoutsPricesPath, this._prices);
+        }
+    }
+
     saveLoadout(name: string, loadout: Item[]): void
     {
         this._loadouts.set(name, loadout);
-        this.saveToDisk();
+        this.saveToDisk(LoadoutManager._loadoutsFilePath, this._loadouts);
     }
 
     removeLoadout(name: string): void
     {
-        if (this._loadouts.delete(name))
+        if (this._loadouts.delete(name) || this._prices.delete(name))
         {
-            this.saveToDisk();
+            this.saveToDisk(LoadoutManager._loadoutsFilePath, this._loadouts);
+            this.saveToDisk(LoadoutManager._loadoutsPricesPath, this._prices);
         }
     }
 

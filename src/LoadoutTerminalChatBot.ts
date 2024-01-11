@@ -15,7 +15,7 @@ export class LoadoutTerminalChatBot implements IDialogueChatBot
         @inject("WinstonLogger") protected logger: ILogger,
     )
     {
-        logger.logWithColor(`[waffle.modder] Loadout Terminal :: ${commandHandler.count()} loadouts ready`, LogTextColor.MAGENTA)
+        logger.logWithColor(`[waffle.modder] Loadout Terminal :: ${commandHandler.loadoutCount()} loadouts ready | ${commandHandler.priceCount()} with prices`, LogTextColor.MAGENTA);
     }
 
     public getChatBot(): IUserDialogInfo

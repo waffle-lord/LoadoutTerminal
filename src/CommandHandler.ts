@@ -1,4 +1,5 @@
 import { MailSendService } from "@spt-aki/services/MailSendService";
+import { RagfairPriceService } from "@spt-aki/services/RagfairPriceService";
 import { IUserDialogInfo } from "@spt-aki/models/eft/profile/IAkiProfile";
 import { ISendMessageRequest } from "@spt-aki/models/eft/dialog/ISendMessageRequest";
 import { LoadoutManager } from "./LoadoutManager";
@@ -8,6 +9,8 @@ import { InRaidHelper } from "@spt-aki/helpers/InRaidHelper";
 import { ItemHelper } from "@spt-aki/helpers/ItemHelper";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import { CommandInfo, CommandType } from "./CommandInfo";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { Money } from "@spt-aki/models/enums/Money";
 
 
 @injectable()
@@ -20,6 +23,7 @@ export class CommandHandler
         @inject("InRaidHelper") protected inRaidHelper: InRaidHelper,
         @inject("ItemHelper") protected itemHelper: ItemHelper,
         @inject("JsonUtil") protected jsonUtil: JsonUtil,
+        @inject("RagfairPriceService") protected ragfairPriceService: RagfairPriceService,
     )
     {
     }
@@ -113,6 +117,11 @@ export class CommandHandler
         }
     }
 
+    // todo: setup pagination because there is a char limit on messages
+    //     : should be ok to show 5 loadout per page
+    //     : list <-- shows first page
+    //     : list 2 <-- shows page 2 if it exists
+    //     : new header can be like: === Loadouts (1/3) ===
     private listLoadoutCommand(): string
     {
         var message: string = "== Saved Loadouts ==\n";
@@ -156,11 +165,18 @@ export class CommandHandler
             }
         
             this.loadoutManager.saveLoadout(info.name, equipt);
+
+            var priceInfo: string = "";
+
+            if (info.price)
+            {
+                priceInfo = `\n${this.setPriceCommand(info, equipt).replace(`${info.name}: `, "")}`;
+            }
         
             this.mailSendService.sendUserMessageToPlayer(
                 sessionId,
                 bot,
-                `loadout saved: ${info.name}`);
+                `loadout saved: ${info.name}${priceInfo}`);
 
         }, 10000);
 
@@ -187,9 +203,27 @@ export class CommandHandler
         return "You can find your items in the system chat";
     }
     
-    private setPriceCommand(info: CommandInfo): string
+    private setPriceCommand(info: CommandInfo, items: Item[] = undefined): string
     {
-        return "Not implemented"
+        var loadoutPrice = info.amount ? info.amount : 0;
+
+        // if no amount is set, get dynamic price
+        if (!info.amount)
+        {
+            // get items from file if they weren't provided
+            if (!items)
+            {
+                items = this.loadoutManager.getLoadout(info.name);
+            }
+
+            loadoutPrice = Math.round(this.ragfairPriceService.getDynamicOfferPriceForOffer(items, info.currency, false));
+        }
+
+        this.loadoutManager.saveLoadoutPrice(info.name, loadoutPrice, info.currency);
+
+        const moneyName = Object.keys(Money)[Object.values(Money).indexOf(info.currency)].toLowerCase();
+
+        return `${info.name}: price is ${loadoutPrice} ${moneyName}`
     }
 
     private renameLoadoutCommand(info: CommandInfo): string
@@ -209,9 +243,14 @@ export class CommandHandler
         return `loadout remove: ${info.name}`;
     }
 
-    count(): number
+    loadoutCount(): number
     {
-        return this.loadoutManager.count();
+        return this.loadoutManager.loadoutCount();
+    }
+
+    priceCount(): number
+    {
+        return this.loadoutManager.priceCount();
     }
 
     route(sessionId: string, request: ISendMessageRequest, bot: IUserDialogInfo): void
@@ -239,6 +278,14 @@ export class CommandHandler
                 break;
 
             case CommandType.setprice:
+                if (commandInfo.amount == 0) {
+                    // if the price is set to 0, just remove the price
+                    this.loadoutManager.removeLoadoutPrice(commandInfo.name);
+                    response =  `${commandInfo.name}: price removed`;
+                    break;
+                }
+
+                // otherwise, set loadout price
                 response = this.setPriceCommand(commandInfo);
                 break;
 
