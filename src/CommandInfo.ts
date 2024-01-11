@@ -56,7 +56,8 @@ export class CommandInfo
 
     public static Parse(request: string): CommandInfo 
     {
-        const regex = new RegExp(/^((?<command>help|save|rm|get|mv) (?<name>(?![ ]+)[\w ]+)(?<price>([|] (?<newname>(?![ ]+)[\w ]+))|--price( (?<currency>d|r|e)?\s?(?<amount>\d*))?)?$|(?<noparams>help|list))/, "i");
+        // todo: break out currency and amount for use in setprice
+        const regex = new RegExp(/^((?<command>help|setprice|save|rm|get|mv) (?<name>(?![ ]+)[\w ]+)(?<price>([|] (?<newname>(?![ ]+)[\w ]+))|--price( (?<currency>d|r|e)?\s?(?<amount>\d*))?)?$|(?<noparams>help|list))/, "i");
 
         const result = request.match(regex);
 
