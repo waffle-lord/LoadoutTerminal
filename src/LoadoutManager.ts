@@ -40,9 +40,27 @@ export class LoadoutManager
         return this._prices.size;
     }
 
-    getLoadoutNames(): string[]
+    private getLoadoutNames(): string[]
     {
         return Array.from(this._loadouts.keys());
+    }
+
+    getLoadoutListInfo(): string[]
+    {
+        let names = this.getLoadoutNames();
+
+        for (let i = 0; i < names.length; i++)
+        {
+            const name = names[i];
+
+            const priceInfo: PriceInfo = this._prices.get(name);
+
+            const moneyName = priceInfo ? Object.keys(Money)[Object.values(Money).indexOf(priceInfo.currency)].toLowerCase() : "";
+
+            names[i] = priceInfo ? `${names[i]} | ${priceInfo.price} ${moneyName}` : `${names[i]} | Free`;
+        }
+
+        return names;
     }
 
     saveLoadoutPrice(name: string, price: number, currency: Money): void
